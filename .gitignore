@@ -1,0 +1,11 @@
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs (in case users run audits locally and accidentally stage them)
+LEGAL_AUDIT.md
