@@ -1,3 +1,16 @@
+---
+template: kvkk-aydinlatma
+language: tr
+legal_basis:
+  - kvkk_md_10
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Kurul kararları ile güncellenebilir; resmi metin için kvkk.gov.tr"
+---
+
 # KVKK Aydınlatma Metni Şablonu
 
 Bu şablon, Next.js App Router için `app/aydinlatma/page.tsx` olarak kullanılır. Diğer framework'lerde HTML/Markdown'a çevir.

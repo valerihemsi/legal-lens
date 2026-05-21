@@ -464,25 +464,148 @@ find . -path "*/api/me*" -type f 2>/dev/null
 
 ---
 
-## 11. E-Ticaret / Ödeme
+## 11. E-Ticaret / Ödeme (v0.3'te genişletildi)
 
-### Tarama
+### Tarama — kapsamlı
+
+**A. Ödeme sağlayıcı SDK'ları**:
 ```bash
-grep -rn "stripe\|iyzico\|paytr\|paddle\|@paypal" --include="*.tsx" --include="*.ts" --include="package.json"
+# Türkiye odaklı
+grep -rn "iyzico\|paytr\|@paytr/\|sipay\|shopier\|payu" \
+  --include="package.json" --include="*.ts" --include="*.py"
+
+# Global
+grep -rn "@stripe/\|stripe-js\|stripe-node\|@paypal\|paddle\|braintree\|@adyen" \
+  --include="package.json" --include="*.ts"
+
+# Mobile/local
+grep -rn "lemonsqueezy\|@chargebee\|@recurly\|cryptomus" \
+  --include="package.json" --include="*.ts"
 ```
 
-### Risk
-Ödeme alınıyorsa Türkiye'de:
-- **ETBİS kaydı** (Elektronik Ticaret Bilgi Sistemi)
-- **Mesafeli Satış Sözleşmesi**
-- **Cayma Hakkı** (14 gün)
-- **KDV mükellefiyeti**
-- **Tüketici Hakem Heyeti** bilgisi
-- **İade/iptal politikası**
+**B. Ödeme akışı sinyalleri**:
+```bash
+# Checkout pages
+ls app/checkout app/odeme app/cart app/sepet pages/checkout pages/odeme 2>/dev/null
 
-### Mitigasyon
-- Bu skill'in kapsamı dışı, faz 3'te eklenebilir
-- Şimdilik: "e-ticaret tespit edildi → avukatla görüş" flag'i
+# Order/sipariş tabloları
+grep -rn -iE "from\(.(orders|siparis|cart|sepet|payments|odemeler)" \
+  --include="*.tsx" --include="*.ts" | head -10
+
+# Stripe checkout/iyzico session
+grep -rn "stripe\.checkout\.sessions\|iyzipay.*payment\|payTRRequest" \
+  --include="*.ts" | head -10
+```
+
+**C. Ürün/hizmet sinyalleri**:
+```bash
+# Product catalog
+grep -rn -iE "(price|fiyat|stock|stok|sku|product|urun|hizmet)" \
+  --include="*.tsx" --include="*.ts" | grep -iE "(useState|interface|type )" | head -10
+
+# Subscription patterns
+grep -rn -iE "(subscription|abone|plan|tier|recurring)" \
+  --include="*.tsx" --include="*.ts" | head -5
+```
+
+**D. Satış konusu tespit**:
+```bash
+# Fiziksel ürün (kargo, shipping address)
+grep -rn -iE "(shipping|kargo|delivery|address|adres)" --include="*.tsx" | head -5
+
+# Dijital ürün/hizmet (no shipping, instant delivery)
+grep -rn -iE "(download|access|license|abonelik|trial)" --include="*.tsx" | head -5
+```
+
+### Karar — Satış türü
+
+| Sinyaller | Alt-tür | Cayma hakkı | Vergisel |
+|---|---|---|---|
+| Stripe + shipping address + cart | **Fiziksel ürün satışı** | 14 gün (6502 md. 48) | KDV + ETBİS |
+| Stripe + instant access + download | **Dijital ürün** | Cayma hakkı **istisnası** (md. 15/1-ğ) | KDV + ETBİS |
+| iyzico + abonelik + recurring | **SaaS / abonelik** | 14 gün ilk satınalmada | KDV + ETBİS + abonelik özel hüküm |
+| Stripe + tek seferlik hizmet | **Hizmet sunumu** | Hizmet **tamamlanmadıysa** 14 gün; tamamlandıysa istisna | KDV + ETBİS |
+| Sadece Stripe Connect / marketplace | **Marketplace platformu** | Karmaşık — satıcı + platform sorumluluğu ayrı | ETBİS aracı sıfatıyla kayıt |
+
+### Risk — Türkiye e-ticaret yükümlülükleri
+
+#### 🔴 ETBİS kayıt zorunluluğu yok
+- **Elektronik Ticaret Hakkında Kanun (6563 sayılı)** + 2024 değişiklikleri
+- Türkiye'de e-ticaret faaliyeti yapan tüm gerçek/tüzel kişiler **ETBİS sistemine kayıt** zorunlu
+- Kayıt: https://etbis.ticaret.gov.tr
+- Kayıt **olmadan** ödeme sağlayıcı (iyzico, PayTR vb.) çoğunlukla onay vermez
+- **Halka açık üye olmuş işletmeler** — ETBİS kayıt no. footer'da görünür olmalı
+
+#### 🔴 Mesafeli Satış Sözleşmesi yok
+- **6502 sayılı Tüketici K. md. 48 + Mesafeli Sözleşmeler Yön.**
+- Tüketiciye sözleşme metni **satın alma öncesi** sunulmalı + onay alınmalı
+- İçerik: satıcı bilgileri, ürün/hizmet, fiyat, ödeme, teslimat, **cayma hakkı**, şikayet mekanizması, çözüm makamları
+- **Eksikse**: yapılan satış **geçersiz** sayılabilir, tüketici lehine
+
+#### 🔴 Cayma Hakkı (14 gün) yok
+- **6502 sayılı K. md. 48/4**: Tüketici **14 gün** içinde sebep göstermeksizin sözleşmeden cayabilir
+- İstisnalar (md. 15): hızlı bozulan ürünler, ısmarlama, açılmış dijital içerik, vb.
+- **Cayma formu** tüketiciye verilmeli + e-ticaret sitesinde **kolay erişilebilir** olmalı
+- **Eksikse**: cayma süresi **1 yıl 14 gün'e uzar** (md. 48/5)
+
+#### 🔴 İade/iptal akışı yok
+- Kullanıcı cayma hakkını **nasıl** kullanır?
+- Form + e-posta + manuel akış kabul edilebilir; ama erişilebilir + ücretsiz olmalı
+- 14 gün içinde iade ödemesi yapılmalı (yasal süre)
+
+#### 🟡 Tüketici Hakem Heyeti bilgisi yok
+- Belirli para sınırı altında (2024 itibariyle ~57.000 TL) Hakem Heyeti zorunlu yetkili
+- Üstü için Tüketici Mahkemesi
+- Bu bilgi sözleşmede + sitenin "Çözüm Mekanizmaları" bölümünde yer almalı
+
+#### 🟡 Vergi mükellefiyeti belirsiz
+- Şahıs şirketi olmadan satış → mali müşavir review zorunlu
+- KDV mükellefi olup olmadığı → KDV faturası gerekli
+- Yurt dışı satışta KDV durumu (B2B vs B2C)
+- **Bu skill kapsamı dışı**, mali müşavir/SMMM zorunlu
+
+### Risk — EU e-ticaret yükümlülükleri (paralel)
+
+#### 🔴 14-day withdrawal right yok (EU Consumer Rights Directive)
+- EU CRD Art. 9-16 — tüketici 14 gün içinde sebep göstermeksizin sözleşmeden çekilebilir
+- Form + clear information + 14-day reimbursement
+
+#### 🔴 VAT MOSS / OSS kayıt
+- EU'da fiziksel veya dijital satış yapan operatör → VAT One Stop Shop kaydı
+- EU dışı operatör + EU müşterisi → IOSS (Import OSS) veya doğrudan ülke kaydı
+- **2021+ değişiklik**: B2C dijital satışta vergi alıcının ülkesine göre
+
+#### 🟡 Cookies + tracking için "legitimate interest" ≠ ödeme sayfası
+- Ödeme sayfasında bile reklam pixel/tracking olmamalı
+- PCI-DSS uyumu için strict cookie policy
+
+### Zorunlu yapı taşları (TR pazarı)
+
+| Yapı | Kontrol | Yoksa risk |
+|---|---|---|
+| **Mesafeli Satış Sözleşmesi sayfası** | `ls app/mesafeli-satis* pages/mesafeli-satis*` | 🔴 |
+| **Cayma Hakkı sayfası + form** | `ls app/cayma-hakki* app/iade-iptal*` | 🔴 |
+| **ETBİS kayıt notu (footer veya sayfa)** | `grep -rn "ETBİS\|etbis" --include="*.tsx"` | 🔴 |
+| **Tüketici Hakem Heyeti bilgisi** | `grep -rn "Hakem Heyeti\|tüketici hakemi"` | 🟡 |
+| **KDV/fatura bilgisi** | Aydınlatma + sözleşmede vergi bilgisi | 🟡 |
+| **Çözüm/şikayet mekanizması** | Email + iletişim bilgisi | 🟡 |
+| **Pre-checkout consent checkbox** | "Mesafeli satış sözleşmesini okudum, kabul ediyorum" | 🔴 |
+
+### Mitigasyon — Şablonlar (v0.3)
+
+- `/legal-lens generate ecommerce` → şu paketi üretir:
+  - `templates/mesafeli-satis.md` → `/mesafeli-satis-sozlesmesi` sayfası
+  - `templates/cayma-hakki.md` → `/cayma-hakki` sayfası + form
+  - `templates/iade-iptal.md` → `/iade-iptal` akışı
+  - `templates/etbis-bilgi-formu.md` → footer notu + bilgi sayfası
+  - Checkout flow'a consent checkbox
+  - Mali müşavir/avukat review uyarısı
+
+### Mitigasyon — Ekosistem entegrasyonu
+
+- **Ödeme sağlayıcı vendor docs**: iyzico/PayTR/Stripe'ın e-ticaret rehberi
+- **ETBİS başvuru süreci**: T.C. Ticaret Bakanlığı sitesinden adım adım
+- **SMMM/mali müşavir**: Vergi optimizasyonu için zorunlu danışmanlık
 
 ---
 
@@ -585,6 +708,134 @@ Eğer site teşhis, tedavi, ilaç önerisi, mucize iyileşme iddiası içeriyors
 - Kullanım Koşullarına gıda/sağlık alt-bölümü ekle (kullanıcı sorumluluğu, indemnity)
 - Bireye özel beslenme/sağlık tavsiyesi yasağı belirt
 - Sağlık iddiası tespit edilirse → **kullanıcıya açık uyarı**: "bu proje skill kapsamı dışı, avukat görüşmesi al"
+
+---
+
+## 13. AI / GenAI Özel Yükümlülükler (v0.3 yeni)
+
+Yapay zeka ve üretken AI (GenAI) içeren projelerde — chatbot, AI yazı/görsel/ses üreteci, AI yorum/öneri sistemi, AI-powered analitik — klasik yasal yüzeyleri aşan **AI-spesifik** yükümlülükler var:
+- **EU AI Act (Regulation 2024/1689)**: 2024 yürürlüğe girdi; risk-tier sınıflandırma + transparency obligations + GPAI rules
+- **KVKK md.5/2-d**: Otomatik karar verme ile özel nitelikli veri işleme (yasak haller dışında açık rıza)
+- **GDPR Art.22**: Otomatik karar verme + profillemeye karşı veri sahibi hakları
+- **Türkiye Yapay Zeka Strateji Belgesi**: 2024+ taslaklarda transparency obligations
+
+### Tarama — AI/GenAI tespit
+
+**A. AI SDK/API kullanımı**:
+```bash
+# Foundation model API'leri
+grep -rn "@anthropic-ai/sdk\|@openai/\|openai\b\|@google/generative-ai\|@google-ai/generativelanguage\|@mistralai/\|cohere-ai\|@huggingface/" \
+  --include="package.json" --include="*.ts" --include="*.tsx" --include="*.py" --include="requirements.txt"
+
+# Vercel AI SDK
+grep -rn "ai/openai\|ai/anthropic\|@vercel/ai\|^ai$" --include="package.json"
+
+# LangChain/LlamaIndex/orchestration
+grep -rn "langchain\|llama-index\|crewai\|@langchain\|autogen" --include="package.json" --include="requirements.txt"
+
+# Self-hosted inference
+grep -rn "ollama\|llama-cpp\|transformers\|@xenova/transformers" --include="*.ts" --include="*.py" --include="package.json"
+```
+
+**B. AI çıktısı user-facing mi?**:
+```bash
+# AI generated content → kullanıcıya sunuluyor mu?
+grep -rn -iE "(generate|generated|create|completion|chat|interpret|yorum|üret|tahmin|recommendation)" \
+  --include="*.tsx" --include="*.ts" 2>/dev/null | grep -iE "(claude|openai|anthropic|gpt|gemini|llm|ai)" | head -10
+
+# Streaming output (kullanıcının doğrudan gördüğü AI çıktısı)
+grep -rn "StreamingTextResponse\|useChat\|useCompletion\|stream\b.*completion\|streamText" \
+  --include="*.tsx" --include="*.ts" | head -10
+```
+
+**C. Otomatik karar verme/profilleme**:
+```bash
+# Kullanıcı segmentasyonu, scoring, profiling
+grep -rn -iE "(score|segment|cohort|category|classify|recommend|target.*user|persona|cluster)" \
+  --include="*.ts" --include="*.py" | head -10
+
+# Embedding/vector tabanlı kullanıcı modeli
+grep -rn "embedding\|vector.*user\|cosine.*similarity" --include="*.ts" --include="*.py" | head -5
+```
+
+**D. Training data / fine-tuning sinyalleri**:
+```bash
+# Custom fine-tuning veya RAG (user data → AI feedback loop)
+grep -rn -iE "(fine.?tun|train.*data|dataset|embedding.*index|vector.*store|pinecone|weaviate|chroma|qdrant)" \
+  --include="*.ts" --include="*.py" --include="package.json" | head -10
+```
+
+### Karar — AI alt-türü
+
+| Tespit | Alt-tür | AI Act risk tier |
+|---|---|---|
+| Foundation model API + user-facing chatbot | **AI assistant / chatbot** | Limited risk (transparency) |
+| AI yazı/görsel/ses üretimi user-facing | **GenAI content tool** | Limited risk + Art. 50 marking |
+| Kullanıcı puanlama/scoring/segmentasyon | **Automated decision-making** | High risk (Annex III) |
+| Tıbbi/eğitim/iş/kredi karar AI | **High-risk AI system** | High risk (Annex III) — full obligations |
+| Çocuk üzerinde kişiselleştirme | **Vulnerable groups** | High risk + minor data |
+| GPAI / open-source genel AI | **General-purpose AI** | GPAI rules (Art. 53-55) |
+
+Detaylı tier rehberi: `reference/ai-act-tiers.md`
+
+### Risk
+
+#### 🔴 Eksik output disclaimer (AI çıktısı kullanıcıya gidiyor)
+- AI çıktısının **AI tarafından üretildiği** belirtilmemesi → EU AI Act Art. 50 ihlali (limited risk için bile)
+- "Bu garanti edilmiş bilgi" izlenimi → 6502 sayılı Tüketici K. yanıltıcı ticari uygulama
+- Halüsinasyon riski açıklanmamış → sağlık/finans/hukuk alanında **çok ağır**
+
+#### 🔴 Bias disclosure yok
+- Modelin **eğitim verisi** kaynağı belirsiz → şeffaflık ihlali
+- Bias kategorileri (gender, age, geographic, cultural) açıklanmamış
+- Bireye özel sonuç verirken bias yansıma uyarısı yok
+
+#### 🔴 Otomatik karar verme — Art. 22 (GDPR) / md. 5/2-d (KVKK)
+- Kullanıcı **otomatik** karar veren AI sistemine maruz kaldığını bilmiyor → veri sahibi hakkı ihlali
+- "Anlamlı insan müdahalesi" yok → otomatik karara itiraz mekanizması eksik
+- Profilleme + sonuç birey üzerinde **hukuki/önemli etki** yapıyor → ek yükümlülükler
+
+#### 🟡 Model card / data sheet yok
+- Hangi model (versiyon dahil), nasıl eğitildi, hangi metric'lerle değerlendirildi belirsiz → şeffaflık eksiği
+- Audit yapılamıyor, üçüncü taraf inceleyemiyor
+
+#### 🟡 Training data lineage yok
+- User input → AI training (RAG embedding store dahil) → kullanıcının verisi modele "kaçıyor mu"?
+- KVKK md. 5/1 — açık rıza ile uyumsuz olabilir (rıza alındıktan sonra training kullanımı belirtilmediyse)
+
+#### 🟡 Hassas alan + AI = profesyonel sınır
+- Tıbbi teşhis/tedavi AI + lisanslı hekim onayı yok → 1262 sayılı K. + Sağlık Bakanlığı reklam yön. (önceki Yüzey 12 ile bağlantılı)
+- Finans tavsiyesi AI + SPK lisansı yok → finansal düzenleme ihlali
+- Hukuki tavsiye AI + Avukatlık K. md. 35 → meslek tekeli ihlali
+
+### Mitigasyon — Zorunlu yapı taşları
+
+| Yapı | Kontrol | Yoksa risk |
+|---|---|---|
+| **AI output disclaimer** (görünür, her sayfada AI içerik varsa) | "AI tarafından üretildi" ifadesi açıkça gösterilir mi | 🔴 |
+| **Model card** (kullanılan modeller + versiyonlar) | `/model-card` veya `/ai-info` sayfası var mı | 🟡 |
+| **Bias statement** (sınırlamalar) | Aydınlatma metnine AI-spesifik bölüm eklenmiş mi | 🟡 |
+| **Otomatik karar verme bildirim** (Art. 22 / md. 5/2-d) | Kullanıcı "AI karar veriyor" bilgisini alıyor mu | 🔴 (varsa) |
+| **İtiraz mekanizması** (insan inceleme) | Kullanıcı AI kararına itiraz edebilir mi | 🔴 (varsa) |
+| **Training data lineage** | Kullanıcı input'unun training'de kullanılmadığı veya rıza ile kullanıldığı | 🟡 |
+| **Hata raporlama** (AI çıktısı yanlış → bildir) | Kullanıcı hatalı çıktıyı raporlayabilir mi | 🟢 |
+| **Vendor DPA** (Anthropic/OpenAI/vs.) | Veri işleyen sözleşmesi imzalanmış mı | 🟡 |
+
+### Mitigasyon — Şablonlar (v0.3)
+
+- `/legal-lens generate ai` → şu paketi üretir:
+  - `templates/ai-output-disclaimer.md` → görünür AI çıktı işareti
+  - `templates/model-card.md` → `/model-card` sayfası
+  - `templates/ai-bias-statement.md` → aydınlatma metnine AI bölümü
+  - `templates/ai-data-lineage.md` → training/RAG kullanımı disclosure
+
+### Senin projelerine özel notlar
+
+- **VAL-NSPE LM**: Bias-auditing wrapper olarak çalışıyor → kendisi **şeffaflık aracı**; ama yine de paper'da model card + data sheet beklenir
+- **Yıldızname**: Symbolic/falcılık AI → "kehanet değildir" + "AI tarafından üretildi" + 18+ kontrolü (zaten var)
+- **TargetMind AI**: Game customer targeting → **otomatik karar verme + bias-aware** → Art. 22 ek yükümlülük
+- **Philosophy Research**: AI yorumlama → AI generated content marking + bias statement
+- **Bloom Within**: Chakra interpretation → "tıbbi tavsiye değildir" + AI generated marking
 
 ---
 

@@ -1,3 +1,17 @@
+---
+template: kvkk-md11-rights
+language: tr
+legal_basis:
+  - kvkk_md_11
+  - kvkk_md_13
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Md. 13 — başvurulara 30 gün içinde cevap zorunlu"
+---
+
 # KVKK Md. 11 — Veri Sahibi Hakları İçin Kod Şablonları
 
 Veri saklayan her uygulamada, KVKK md. 11 hakları için **çalışan bir mekanizma** gerekli. Sadece "iletişim email'imize yazın" çoğu durumda yetmez; kullanıcının kendi hesabından erişim/silme yapabilmesi en az dirençli yol.

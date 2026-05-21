@@ -1,3 +1,17 @@
+---
+template: consent-checkbox
+language: tr
+legal_basis:
+  - kvkk_md_5_1
+  - kvkk_kurul_2020_216
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Pre-ticked checkbox yasak (md. 5/1 açık rıza şartları)"
+---
+
 # Açık Rıza Checkbox Şablonu
 
 Form öncesi zorunlu rıza kutusu. React + Next.js öncelikli ama HTML/Vue/Svelte için aşağıda alternatif var.

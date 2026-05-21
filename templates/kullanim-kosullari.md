@@ -1,3 +1,16 @@
+---
+template: kullanim-kosullari
+language: tr
+legal_basis:
+  - tbk_borclar_kanunu
+  - 6502_tuketici_korumasi
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 12_months
+version: "0.3"
+---
+
 # Kullanım Koşulları Şablonu (Türkçe)
 
 Next.js App Router için `app/kosullar/page.tsx`. Diğer framework'lerde uyarlanır.

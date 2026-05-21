@@ -1,3 +1,17 @@
+---
+template: cookie-banner-en
+language: en
+legal_basis:
+  - gdpr_art_6
+  - eprivacy_directive_art_5_3
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "ePrivacy Art. 5(3) cookie law + GDPR Art. 6(1)(a) consent; reject = accept visual parity required"
+---
+
 # Cookie Banner — English Variant
 
 For English deployments. The **architecture is identical** to the Turkish banner (`cookie-banner.md`) — same `cookieConsent.ts`, `useCookieConsent.ts`, `ConsentGate.tsx`. Only the **UI strings** and **paths** change.

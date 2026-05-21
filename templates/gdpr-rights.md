@@ -1,3 +1,20 @@
+---
+template: gdpr-rights
+language: en
+legal_basis:
+  - gdpr_art_15
+  - gdpr_art_16
+  - gdpr_art_17
+  - gdpr_art_20
+  - gdpr_art_22
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Art. 12(2) — controller shall facilitate the exercise of rights"
+---
+
 # GDPR Data Subject Rights — Code Templates
 
 For any service that stores personal data, **working endpoints** are required for the data subject rights under GDPR Articles 15-22. A passive "email us" approach is insufficient under Art. 12(2) (controller shall facilitate the exercise of rights).

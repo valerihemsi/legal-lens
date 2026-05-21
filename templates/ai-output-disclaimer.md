@@ -1,0 +1,261 @@
+---
+template: ai-output-disclaimer
+language: tr,en
+legal_basis:
+  - eu_ai_act_art_50
+  - kvkk_md_4_2
+  - 6502_tuketici_yaniltici_reklam
+jurisdiction: TR,EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "EU AI Act Art. 50 (transparency) + her AI-generated content user-facing kullanımda zorunlu"
+---
+
+# AI Output Disclaimer Şablonu
+
+> AI tarafından üretilen içeriğin **görünür şekilde işaretlenmesi**. EU AI Act Art. 50 zorunlu, KVKK + 6502 sayılı Tüketici K. + 5651 kapsamında da gerekli (yanıltıcı izlenim engellemek için).
+
+**Placeholder'lar**:
+- `{{PROJE_ADI}}`
+- `{{MODEL_LISTESI}}` — kullanılan modellerin adı (örn. "Claude Sonnet 4.6, GPT-4o")
+- `{{ICERIK_TIPI}}` — "metin yorumu", "görsel", "ses", "öneri", vb.
+- `{{LANG}}` — "tr" veya "en"
+
+---
+
+## Türkçe — Inline disclaimer komponenti
+
+`components/AIDisclaimer.tsx`:
+
+```tsx
+import React from "react";
+
+type AIDisclaimerVariant = "inline" | "footer" | "compact" | "expanded";
+
+interface Props {
+  variant?: AIDisclaimerVariant;
+  modelList?: string;        // override default model list
+  contentType?: string;      // "yorum", "öneri", vs.
+  className?: string;
+}
+
+const DEFAULT_MODEL_LIST = "{{MODEL_LISTESI}}";
+const DEFAULT_CONTENT_TYPE = "{{ICERIK_TIPI}}";
+
+export default function AIDisclaimer({
+  variant = "inline",
+  modelList = DEFAULT_MODEL_LIST,
+  contentType = DEFAULT_CONTENT_TYPE,
+  className = "",
+}: Props) {
+  if (variant === "compact") {
+    return (
+      <div className={`ai-disclaimer ai-disclaimer-compact ${className}`} role="note">
+        <span aria-hidden="true">🤖</span> Bu içerik yapay zeka tarafından üretildi.
+      </div>
+    );
+  }
+
+  if (variant === "inline") {
+    return (
+      <div className={`ai-disclaimer ai-disclaimer-inline ${className}`} role="note">
+        <strong>Yapay zeka tarafından üretildi.</strong> Bu {contentType}, {modelList} kullanılarak otomatik olarak oluşturuldu. İçerik hatalar içerebilir, garanti edilmez. Önemli kararlar almadan önce konuyla ilgili uzman veya güvenilir kaynaklardan doğrulama yapın.
+      </div>
+    );
+  }
+
+  if (variant === "expanded") {
+    return (
+      <div className={`ai-disclaimer ai-disclaimer-expanded ${className}`} role="region" aria-label="AI çıktısı bilgilendirme">
+        <h3>Yapay Zeka Üretimi İçerik</h3>
+        <ul>
+          <li><strong>Üretildiği şekilde:</strong> {modelList} otomatik olarak oluşturdu</li>
+          <li><strong>İnsan onayı:</strong> Çıktı bir insan tarafından gözden geçirilmemiştir</li>
+          <li><strong>Garanti yok:</strong> Doğruluk, güvenilirlik veya belirli bir amaca uygunluk garanti edilmez</li>
+          <li><strong>Tıbbi/hukuki/finansal tavsiye değildir:</strong> Profesyonel bir uzmana danışın</li>
+          <li><strong>Bias riski:</strong> AI modelleri eğitim verisindeki önyargıları taşıyabilir; bkz. <a href="/ai-bilgi">AI Bilgi Sayfası</a></li>
+        </ul>
+      </div>
+    );
+  }
+
+  // footer variant
+  return (
+    <p className={`ai-disclaimer ai-disclaimer-footer ${className}`} role="note">
+      Bu sitedeki bazı içerikler yapay zeka tarafından üretilmektedir. <a href="/ai-bilgi">Detay</a>
+    </p>
+  );
+}
+```
+
+### CSS (globals.css'e ekle)
+
+```css
+.ai-disclaimer {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  background: rgba(99, 102, 241, 0.08);
+  border-left: 3px solid rgb(99, 102, 241);
+  margin: 1rem 0;
+}
+
+.ai-disclaimer-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.ai-disclaimer-footer {
+  text-align: center;
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.ai-disclaimer-expanded h3 {
+  margin: 0 0 0.5em;
+  font-size: 1rem;
+}
+
+.ai-disclaimer-expanded ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.ai-disclaimer-expanded li {
+  margin: 0.3em 0;
+}
+```
+
+### Kullanım
+
+```tsx
+// AI çıktısının olduğu her sayfa
+<AIDisclaimer variant="inline" />
+
+// Compact (chat bubble, kısa output)
+<AIDisclaimer variant="compact" />
+
+// /aydinlatma + /ai-bilgi sayfasında
+<AIDisclaimer variant="expanded" />
+
+// Site-wide footer
+<AIDisclaimer variant="footer" />
+```
+
+---
+
+## English — Inline disclaimer component
+
+Same component, English strings:
+
+```tsx
+// Variant strings
+if (variant === "compact") {
+  return (
+    <div className={...} role="note">
+      <span aria-hidden="true">🤖</span> AI-generated content.
+    </div>
+  );
+}
+
+if (variant === "inline") {
+  return (
+    <div className={...} role="note">
+      <strong>AI-generated.</strong> This {contentType} was produced automatically using {modelList}. The content may contain errors and is not guaranteed. Verify with relevant experts or trusted sources before making important decisions.
+    </div>
+  );
+}
+
+if (variant === "expanded") {
+  return (
+    <div className={...}>
+      <h3>AI-Generated Content</h3>
+      <ul>
+        <li><strong>How produced:</strong> Automatically generated by {modelList}</li>
+        <li><strong>No human review:</strong> Output has not been reviewed by a human</li>
+        <li><strong>No warranty:</strong> Accuracy, reliability, or fitness for a purpose is not guaranteed</li>
+        <li><strong>Not medical/legal/financial advice:</strong> Consult a professional</li>
+        <li><strong>Bias risk:</strong> AI models may carry biases from training data; see <a href="/ai-info">AI Info Page</a></li>
+      </ul>
+    </div>
+  );
+}
+
+// footer
+return (
+  <p className={...}>
+    Some content on this site is AI-generated. <a href="/ai-info">Learn more</a>
+  </p>
+);
+```
+
+---
+
+## Machine-readable işaretleme (EU AI Act Art. 50/2)
+
+AI Act, GenAI çıktısının **machine-readable** olarak işaretlenmesini gerektiriyor. Output API'sinde:
+
+```typescript
+// Server-side response
+return new Response(JSON.stringify({
+  content: aiOutput,
+  meta: {
+    ai_generated: true,
+    model: "{{MODEL_LISTESI}}",
+    generated_at: new Date().toISOString(),
+    content_type: "{{ICERIK_TIPI}}",
+  }
+}), {
+  headers: {
+    "Content-Type": "application/json",
+    "X-AI-Generated": "true",
+    "X-AI-Model": "{{MODEL_LISTESI}}",
+  },
+});
+```
+
+HTML için:
+
+```html
+<article data-ai-generated="true" data-ai-model="{{MODEL_LISTESI}}">
+  <meta itemprop="aiGenerated" content="true" />
+  {ai-output}
+</article>
+```
+
+---
+
+## Watermarking (görsel/ses için — gelişmiş)
+
+Görsel AI çıktısı varsa watermarking düşünülmeli:
+- **C2PA (Content Authenticity Initiative)** — endüstri standardı, metadata gömme
+- **SynthID** (Google) — invisible watermark for images/audio
+- **Source app annotations** (DALL-E, Midjourney, Stable Diffusion artık üretilen görsele metadata ekliyor)
+
+Bu skill kapsamı dışı — vendor SDK'sının metadata feature'larını kullan.
+
+---
+
+## Aydınlatma metni / Privacy policy entegrasyonu
+
+`/aydinlatma` veya `/privacy` sayfasına AI bölümü ekle (bkz. `ai-bias-statement.md` şablonu).
+
+`/model-card` veya `/ai-info` sayfası oluştur (bkz. `model-card.md`).
+
+---
+
+## Önemli notlar
+
+1. **Görünürlük şart** — Disclaimer küçük yazıyla saklanırsa Art. 50 ihlali sayılabilir
+2. **Kullanıcı etkileşiminden önce** — Chatbot ise ilk mesaj/welcome screen'de "AI ile konuşuyorsun" belirt
+3. **Translation** — Çoklu dil sitelerde her dilde uygun varyant kullan
+4. **Brand uyumu** — "🤖" emoji yerine custom icon kullanılabilir (accessibility'e dikkat: alt-text gerekli)

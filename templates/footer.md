@@ -1,3 +1,15 @@
+---
+template: footer
+language: tr
+legal_basis:
+  - kvkk_md_10
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 12_months
+version: "0.3"
+---
+
 # Footer Şablonu — Yasal Linkli
 
 **Placeholder'lar**:

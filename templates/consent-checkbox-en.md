@@ -1,3 +1,16 @@
+---
+template: consent-checkbox-en
+language: en
+legal_basis:
+  - gdpr_art_7
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Art. 7 — freely given, specific, informed, unambiguous; pre-ticked forbidden"
+---
+
 # Consent Checkbox Template (English / GDPR)
 
 A required consent checkbox to place before form submission. Implements **GDPR Art. 7** (conditions for consent) — freely given, specific, informed, unambiguous, by a clear affirmative action.

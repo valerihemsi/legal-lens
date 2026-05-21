@@ -1,3 +1,17 @@
+---
+template: cookie-banner
+language: tr
+legal_basis:
+  - kvkk_kurul_2020_216
+  - kvkk_md_5_1
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Kurul 2020/216 — kategori bazlı opt-in; reject all = accept all kadar görünür olmalı"
+---
+
 # Cookie Banner + Granular Consent Yönetimi
 
 Türkiye (KVKK Kurul 2020/216) ve EU (GDPR/ePrivacy) için **kategori bazlı opt-in** mantığı. Kullanıcı her kategoriyi ayrı ayrı seçebilir; onay verilmeyen kategorideki hiçbir script/çerez yüklenmez.

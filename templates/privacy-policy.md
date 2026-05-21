@@ -1,3 +1,17 @@
+---
+template: privacy-policy
+language: en
+legal_basis:
+  - gdpr_art_13
+  - gdpr_art_14
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+notes: "Follows EDPB Guidelines on Transparency (WP260)"
+---
+
 # Privacy Policy Template (English / GDPR)
 
 Used as `app/privacy/page.tsx` in Next.js App Router. Adapt to HTML/Markdown for other frameworks.

@@ -1,3 +1,16 @@
+---
+template: cerez-politikasi
+language: tr
+legal_basis:
+  - kvkk_md_10
+  - kvkk_kurul_2020_216
+jurisdiction: TR
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+---
+
 # Çerez Politikası Şablonu
 
 `app/cerez-politikasi/page.tsx` olarak. Aydınlatma metninden ayrı bir sayfa — çerezlere özgü detaylar burada.

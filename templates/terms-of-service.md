@@ -1,3 +1,16 @@
+---
+template: terms-of-service
+language: en
+legal_basis:
+  - gdpr_general
+  - eu_consumer_rights_directive
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 12_months
+version: "0.3"
+---
+
 # Terms of Service Template (English)
 
 Used as `app/terms/page.tsx` in Next.js App Router. Adapt for other frameworks.

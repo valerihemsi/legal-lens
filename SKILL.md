@@ -1,4 +1,5 @@
 ---
+name: legal-lens
 description: Mevcut projeyi (Next.js/Vite/Flask/herhangi bir web kodtabanı) hukuki uyum riskleri açısından tarar — KVKK/GDPR yükümlülükleri, eksik aydınlatma metni, açık rıza yokluğu, PII toplayan formlar, üçüncü taraf veri aktarımı, riskli iddialar, eksik footer linkleri. Tarama raporu üretir veya istenirse şablon yasal sayfaları üretir.
 allowed-tools: Bash Grep Read Write Edit Glob
 disable-model-invocation: true
@@ -16,6 +17,8 @@ Modlar:
 - **(boş veya `audit`)** — Mevcut projeyi tara, `LEGAL_AUDIT.md` raporu üret
 - **`generate kvkk`** — `/aydinlatma` ve `/kosullar` sayfalarını + footer'ı + consent checkbox'ı oluştur (Türkçe)
 - **`generate gdpr`** — `/privacy` ve `/terms` sayfalarını + footer + consent (İngilizce, Faz 2'de geldi)
+- **`generate ai`** — AI projeleri için: model card + output disclaimer + bias statement + data lineage (v0.3'te geldi)
+- **`generate ecommerce`** — E-ticaret için: mesafeli satış + cayma hakkı + iade-iptal + ETBİS notu (v0.3'te geldi)
 - **`consent`** — Form için açık rıza checkbox snippet'i ekle
 - **`footer`** — Yasal linkleri içeren footer component'i ekle
 - **`cookies`** — Cookie banner + çerez politikası + ConsentGate altyapısını kur
@@ -96,10 +99,34 @@ Mevcut çalışma dizinini tara, şunları belirle:
 
 Her bulgu için kaydet:
 - **Yüzey adı** (örn. "PII toplama", "Üçüncü taraf veri aktarımı")
+- **Yüzey numarası** (1-13, risk-weights.md'den weight için)
 - **Konum** (`file:line` formatında, tıklanabilir)
 - **Bulgu** (ne tespit ettin, kısa)
 - **Risk seviyesi**: 🟢 Düşük / 🟡 Orta / 🔴 Yüksek
 - **Mitigasyon** (somut, eyleme dönük: "şu komutu çalıştır", "şu dosyayı oluştur")
+
+### Adım 2.5 — Skor hesabı (v0.3+)
+
+`reference/risk-weights.md` dosyasını oku, skor hesaplama:
+
+```
+severity_score = 1 (🟢) | 4 (🟡) | 10 (🔴)
+finding_deduction = severity_score × surface_weight (1-3, risk-weights.md tablosundan)
+total_deduction = Σ(all findings)
+final_score = max(0, 100 - total_deduction)
+```
+
+**Modifier'ları uygula** (risk-weights.md'deki ek düşüş tablosu):
+- Halka açık deploy + PII + eksik yasal sayfa: -10
+- Public git repo + .env izleniyor: -15
+- Çocuk verisi + 18+ kontrolü yok: -10
+- Sağlık iddiası + avukat review yapılmamış: cap 50/100
+- AI çıktısı + output disclaimer yok: -5 (v0.3 yüzey 13)
+
+**Skor trendi** (önceki audit varsa):
+- Repo root'ta `LEGAL_AUDIT.md` zaten varsa, "## Özet" bölümünden önceki skoru oku
+- Bu run'un skoruyla karşılaştır, delta hesapla
+- Trend bölümünde göster: "Δ son audit: +X / -X puan"
 
 ### Adım 3 — Rapor üret
 
@@ -113,11 +140,19 @@ Proje root'una `LEGAL_AUDIT.md` yaz. Format:
 
 ## Özet
 
+- **🎯 Uyum Skoru**: <N>/100 <emoji> *(90-100 🟢 düzgün · 70-89 🟡 orta · 50-69 🟠 zayıf · 0-49 🔴 kritik)*
 - **Proje türü**: ...
 - **Jurisdiction tespiti**: KVKK / GDPR / Her ikisi
 - **Deploy**: Halka açık (<URL>) / Sadece yerel
 - **Toplam yüzey**: <n>
 - **🔴 Yüksek risk**: <n> | 🟡 Orta: <n> | 🟢 Düşük: <n>
+- **Yüksek ağırlık alanlar** (weight 3): PII, 3rd-party, eksik yasal sayfa, ...
+
+### Skor Trendi (önceki audit varsa)
+
+- <prev_date>: <prev_score>/100 <prev_emoji>
+- <this_date>: <this_score>/100 <this_emoji> ← bu run
+- Δ: +<X> / -<X> puan (<kısa açıklama: hangi yüzeyler değişti>)
 
 ## Acil Eylemler
 
@@ -125,16 +160,17 @@ Proje root'una `LEGAL_AUDIT.md` yaz. Format:
 
 ## Detaylı Bulgular
 
-### 🔴 <Yüzey adı>
+### 🔴 <Yüzey adı> [Yüzey #1, weight 3]
 - **Konum**: `app/page.tsx:124`
 - **Bulgu**: Email + isim toplayan form, hiç açık rıza yok
 - **Risk**: KVKK md. 5/1 ihlali; idari para cezası riski
+- **Skor etkisi**: -30 (severity 10 × weight 3)
 - **Mitigasyon**:
   1. `/legal-lens generate kvkk` çalıştır → /aydinlatma sayfası oluştur
   2. Form öncesi consent checkbox ekle (`/legal-lens consent`)
   3. Footer'a yasal link ekle (`/legal-lens footer`)
 
-(Tüm bulgular bu formatta)
+(Tüm bulgular bu formatta — `[Yüzey #N, weight X]` ve `**Skor etkisi**` zorunlu)
 
 ## Tarama Dışı Bırakılanlar
 
@@ -148,15 +184,17 @@ Proje root'una `LEGAL_AUDIT.md` yaz. Format:
 
 ---
 
-*Legal Lens v0.1 · Bu rapor hukuki tavsiye değildir.*
+*Legal Lens v0.3 · Bu rapor hukuki tavsiye değildir.*
 ```
 
 ### Adım 4 — Kullanıcıya özet sun
 
 Raporu yazdıktan sonra terminalde kısa bir özet ver:
+- **🎯 Uyum Skoru: <N>/100 <emoji>** (öne çıkar)
 - En kritik 3 bulgu
 - Tahmini düzeltme süresi
 - Hangi `/legal-lens generate ...` komutuyla otomatik şablon üretebileceği
+- Önceki audit varsa: skor trendi (delta)
 
 ---
 
@@ -480,6 +518,177 @@ Eğer `/aydinlatma` zaten varsa, "Veri Sahibi Hakları" bölümünü güncelle: 
 - Silme akışı "SİL" yazımdan önce disabled mı
 - Service role key client'a sızmıyor mu (`grep -r "SUPABASE_SERVICE_ROLE" app/components/ src/components/`)
 - Silinen kullanıcının UGC durumu beklendiği gibi mi
+
+---
+
+## Generate AI modu (v0.3)
+
+AI/GenAI içeren projeler için özel paket — model card + output disclaimer + bias statement + data lineage.
+
+### Adım 1 — AI tespit (önkoşul)
+
+Yüzey 13 (AI/GenAI) tespit edilmiş olmalı. Tespit yoksa kullanıcıya bildir ve çık:
+```
+Bu projede AI/GenAI kullanımı tespit edilmedi. /legal-lens audit çalıştır
+ve önce AI yüzeyini doğrula.
+```
+
+`reference/risk-checklist.md` Yüzey 13 tespitlerini kullan:
+- Foundation model SDK'ları (Anthropic, OpenAI, Google, Mistral, vb.)
+- Vercel AI SDK / LangChain / LlamaIndex
+- Self-hosted inference (Ollama, transformers, vb.)
+
+### Adım 2 — Sınıflandırma
+
+`reference/ai-act-tiers.md` rehberine göre AI tier'ını belirle:
+- **Minimal risk** — yükümlülük yok
+- **Limited risk (Art. 50)** — transparency obligations (en yaygın senaryo)
+- **High risk (Annex III)** — full obligations + avukat review zorunlu
+- **GPAI** — Art. 53 downstream user
+
+Kullanıcıya tespit ettiğin tier'ı söyle ve onay al.
+
+### Adım 3 — Detay sorular
+
+Şablon placeholder'ları için kullanıcıya:
+
+1. **Kullanım amacı** (`{{KULLANIM_AMACI}}` / `{{INTENDED_USE}}`) — bir cümle
+2. **AI çıktısı user-facing mi?** (evet → AI disclaimer'lar görünür eklenecek)
+3. **Otomatik karar verme var mı?** (kullanıcı segmentasyonu, scoring, vb.)
+4. **Fine-tuning yapılıyor mu?** (yes/no/planned)
+5. **RAG / vector store kullanıyor mu?** Kullanıcı verisi indeksleniyor mu?
+6. **DPA durumu** — kullanılan vendor'larla DPA imzalı mı? (Anthropic/OpenAI/Google: yes by default; diğerleri için sor)
+
+### Adım 4 — Üretim
+
+Tespit edilen tier ve proje özelliklerine göre şu dosyaları üret:
+
+#### Limited risk (en yaygın)
+
+1. **`components/AIDisclaimer.tsx`** — `templates/ai-output-disclaimer.md`'den, görünür AI işareti
+2. **`app/model-card/page.tsx`** — `templates/model-card.md`'den, kullanılan modeller + amaç + sınırlamalar
+3. **`app/ai-bias/page.tsx`** — `templates/ai-bias-statement.md`'den, bias categories + tasarım yaklaşımı
+4. **`app/aydinlatma/page.tsx`** veya `app/privacy/page.tsx`'e **AI bölümü ekle** — `templates/ai-data-lineage.md`'den (mevcut sayfaya **ekleme**, yeni dosya değil)
+5. **Footer'a 3 yeni link**: `/model-card`, `/ai-bias`, ai-disclaimer footer variant
+6. **AI çıktısı user-facing component'lere `<AIDisclaimer>` ekle**: `grep -rn "useChat\|useCompletion\|streamText" --include="*.tsx"` ile bul, her bir AI çıktısı render'ını wrap et
+
+#### High risk (Annex III)
+
+Limited risk paketi + ek:
+7. **Conformity assessment notu** — kullanıcıya: "high-risk AI sistemi tespit edildi; CE marking + EU database registration gerekebilir; avukat review zorunlu"
+8. **`/ai-human-oversight` sayfası** — insan supervision design'ını açıkla
+9. **Logging spec** — Art. 12 record keeping için açıklama (kod örneği değil, gereksinim listesi)
+10. **Avukat review uyarısı** — explicit, raporun ana özeti
+
+#### GPAI downstream user
+
+7. **`/ai-info` sayfası** — Hangi GPAI sağlayıcı, hangi versiyon, Art. 53 information'a link
+
+### Adım 5 — Placeholder doldur
+
+Otomatik tespit edilebilenler (kullanıcıdan tekrar sorma):
+- `{{MODEL_LISTESI}}` — package.json + .env'den (env variable adlarına bak, örn. ANTHROPIC_API_KEY → Claude)
+- `{{PROJE_ADI}}` — package.json `name`
+- `{{ILETISIM_EMAIL}}` — mevcut aydınlatma metninden veya kullanıcıya sor (sadece eksikse)
+- `{{TARIH}}` — bugünün ISO tarihi
+- `{{LANG}}` — jurisdiction tespitine göre
+
+Otomatik tespit edilemeyenler (sormak gerekir):
+- `{{KULLANIM_AMACI}}` — bir cümle
+- `{{FINE_TUNE_DURUMU}}` — yapılıyor / planlı / yapılmıyor
+- `{{RAG_DURUMU}}` — kullanılıyor / kullanılmıyor / minimum
+- `{{AI_ACT_TIER}}` — Adım 2'de belirlendi
+
+### Adım 6 — Test checklist
+
+Üretimden sonra:
+
+- [ ] `/model-card` 200 dönüyor mu
+- [ ] `/ai-bias` 200 dönüyor mu
+- [ ] AI çıktısı render edilen her component'te `<AIDisclaimer>` var mı (grep ile doğrula)
+- [ ] Footer'da `/model-card` ve `/ai-bias` link'leri var mı
+- [ ] Aydınlatma metni veya privacy policy'de AI bölümü dolu mu
+- [ ] High-risk ise: avukat review randevusu/notu var mı
+
+### Adım 7 — Skor değişikliği
+
+Bu üretimden sonra `LEGAL_AUDIT.md`'de Yüzey 13 skoru iyileşmeli:
+- Daha önce: 🔴 (örn. -30 puan) → şimdi: 🟢 (örn. -3 puan)
+- Skor delta'yı kullanıcıya bildir.
+
+---
+
+## Generate Ecommerce modu (v0.3)
+
+E-ticaret içeren projeler için özel paket — mesafeli satış + cayma hakkı + iade-iptal + ETBİS.
+
+### Adım 1 — E-ticaret tespit (önkoşul)
+
+Ödeme SDK'sı tespit edilmiş olmalı:
+```bash
+grep -rn "stripe\|iyzico\|paytr\|paddle\|@paypal\|shopier" --include="package.json" --include="*.ts"
+```
+
+Tespit yoksa kullanıcıya bildir ve çık.
+
+### Adım 2 — Sorular
+
+Kullanıcıya:
+
+1. **Satış konusu** — fiziksel ürün / dijital ürün / hizmet / üyelik / abonelik
+2. **Hedef pazar** — TR / EU / global
+3. **Vergi mükellefiyeti** — şahıs şirketi / sermaye şirketi / kayıtsız
+4. **Ödeme sağlayıcı** — Stripe (yurt dışı) veya iyzico/PayTR (Türkiye)
+5. **Teslimat süresi** — ortalama gün
+
+### Adım 3 — Üretim (TR pazarı)
+
+Şu dosyaları üret:
+
+1. **`app/mesafeli-satis-sozlesmesi/page.tsx`** — `templates/mesafeli-satis.md`'den
+2. **`app/cayma-hakki/page.tsx`** — `templates/cayma-hakki.md`'den (14 gün, istisnalar)
+3. **`app/iade-iptal/page.tsx`** — `templates/iade-iptal.md`'den (akış + form)
+4. **`app/etbis-bilgi/page.tsx`** veya footer notu — `templates/etbis-bilgi-formu.md`'den
+5. **Footer'a 4 yeni link**
+6. **Checkout flow'da consent**: mesafeli satış kabulü checkbox (pre-checkout)
+
+### Adım 4 — Üretim (EU/global pazar)
+
+EU consumer rights directive uyumlu:
+
+1. `app/consumer-rights/page.tsx` — 14-day withdrawal right (EU eşdeğeri)
+2. `app/refund-policy/page.tsx`
+3. ETBİS yerine VAT MOSS bilgisi (EU operatörse)
+4. Checkout consent
+
+### Adım 5 — ETBİS uyarısı (TR operatör)
+
+Tespit edilen pazara göre kullanıcıya bilgi notu:
+
+```
+⚠️ ETBİS Bilgi Sistemi Kaydı
+T.C. Ticaret Bakanlığı'nın ETBİS sistemine kayıt zorunludur (e-ticaret faaliyeti yapan tüzel/gerçek kişiler için).
+
+Kayıt adresi: https://etbis.ticaret.gov.tr
+Belge: ETBİS Bilgilendirme Formu (üretilen sayfada)
+```
+
+### Adım 6 — Vergi sorumluluğu uyarısı
+
+Vergi durumuna göre kullanıcıya bilgi notu (avukat/mali müşavir yönlendirmesi):
+
+- **Şahıs şirketi olmadan satış**: 6502 sayılı K. + mevzuat gereği kayıt dışı satış yasak
+- **KDV mükellefiyeti**: dijital ürün/hizmet için ayrı düzenleme (2024+ revize edilen mevzuat)
+- **Vergisel yükümlülükler**: bu skill kapsamı **dışı**; mali müşavir/SMMM gerekli
+
+### Adım 7 — Test checklist
+
+- [ ] Tüm 4 sayfa 200 dönüyor mu
+- [ ] Checkout'ta mesafeli satış kabul checkbox var mı (pre-checked olmadan)
+- [ ] İade-iptal formu çalışıyor mu
+- [ ] Footer'da yeni link'ler var mı
+- [ ] ETBİS kaydı (TR) veya VAT MOSS (EU) bildirimi var mı
+- [ ] Mali müşavir review zorunlu hatırlatması verilmiş mi
 
 ---
 

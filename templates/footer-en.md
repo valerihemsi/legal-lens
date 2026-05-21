@@ -1,3 +1,15 @@
+---
+template: footer-en
+language: en
+legal_basis:
+  - gdpr_art_13
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 12_months
+version: "0.3"
+---
+
 # Footer Template — English / GDPR
 
 The TR `footer.md` already includes a brief EN variant. This file is the **full GDPR-aware footer** with cookie + account links, used when `/legal-lens generate gdpr` runs.

@@ -1,3 +1,16 @@
+---
+template: cookie-policy
+language: en
+legal_basis:
+  - gdpr_art_13
+  - eprivacy_directive_art_5_3
+jurisdiction: EU
+last_updated: 2026-05-21
+last_reviewed: 2026-05-21
+review_cadence: 6_months
+version: "0.3"
+---
+
 # Cookie Policy Template (English)
 
 Used as `app/cookie-policy/page.tsx`. A separate page from the Privacy Policy — cookie-specific details live here. References ePrivacy Directive Art. 5(3) (the "cookie law") and GDPR Art. 6(1)(a) for consent.
